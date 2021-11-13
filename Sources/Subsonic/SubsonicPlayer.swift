@@ -2,10 +2,9 @@
 // SubsonicPlayer.swift
 // Part of Subsonic, a simple library for playing sounds in SwiftUI
 //
-// This file contains the main SubsonicPlayer class, which handles
-// imperatively playing audio from any view, by calling play().
-// It also wraps up the code to prepare audio from a bundle, which is
-// used both here and in `SubsonicPlayerModifier`.
+// This file contains the SubsonicPlayer class, which handles
+// loading and playing a single sound that publishes whether it
+// is currently playing or not.
 //
 // Copyright (c) 2021 Paul Hudson.
 // See LICENSE for license information.
@@ -13,109 +12,76 @@
 
 import AVFoundation
 
-/// The main class responsible for loading and playing sounds.
-public class SubsonicPlayer: NSObject, AVAudioPlayerDelegate {
-    /// When bound to some SwiftUI state, this controls how an audio player
-    /// responds when playing for a second time.
-    public enum PlayMode {
-        /// Restarting a sound should start from the beginning each time.
-        case reset
+/// Responsible for loading and playing a single sound attached to a SwiftUI view.
+public class SubsonicPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
+    /// A Boolean representing whether this sound is currently playing.
+    @Published public var isPlaying = false
 
-        /// Restarting a sound should pick up where it left off, or start from the
-        /// beginning if it ended previously.
-        case `continue`
-    }
+    /// The internal audio player being managed by this object.
+    private var audioPlayer: AVAudioPlayer?
 
-    /// With AVAudioPlayer, specifying -1 for `numberOfLoops` means the
-    /// audio should loop forever. To avoid exposing that in this library, we wrap
-    /// the repeat count inside this custom struct, allowing `.continuous` instead.
-    public struct RepeatCount: ExpressibleByIntegerLiteral, Equatable {
-        public static let continuous: RepeatCount = -1
-        public let value: Int
-
-        public init(integerLiteral value: Int) {
-            self.value = value
+    /// How loud to play this sound relative to other sounds in your app,
+    /// specified in the range 0 (no volume) to 1 (maximum volume).
+    public var volume: Double {
+        didSet {
+            audioPlayer?.volume = Float(volume)
         }
     }
 
-    /// This class is *not* designed to be instantiated; please use the `shared` singleton.
-    override private init() { }
+    /// How many times to repeat this sound. Specifying 0 here
+    /// (the default) will play the sound only once.
+    public var repeatCount: SubsonicController.RepeatCount {
+        didSet {
+            audioPlayer?.numberOfLoops = repeatCount.value
+        }
+    }
 
-    /// The main access point to this class. It's a singleton because sounds must
-    /// be loaded and stored in order to continue playing after calling play().
-    public static let shared = SubsonicPlayer()
+    /// Whether playback should restart from the beginning each time, or
+    /// continue from the last playback point.
+    public var playMode: SubsonicController.PlayMode
 
-    /// The collection of AVAudioPlayer instances that are currently playing.
-    private var playingSounds = Set<AVAudioPlayer>()
 
-    /// Loads, prepares, then plays a single sound from your bundle.
+    /// Creates a new instance by looking for a particular sound filename in a bundle of your choosing.of `.reset`.
     /// - Parameters:
     ///   - sound: The name of the sound file you want to load.
     ///   - bundle: The bundle containing the sound file. Defaults to the main bundle.
     ///   - volume: How loud to play this sound relative to other sounds in your app,
-    ///   specified in the range 0 (no volume) to 1 (maximum volume).
+    ///     specified in the range 0 (no volume) to 1 (maximum volume).
     ///   - repeatCount: How many times to repeat this sound. Specifying 0 here
-    ///   (the default) will play the sound only once.
-    public func play(sound: String, from bundle: Bundle = .main, volume: Double = 1, repeatCount: RepeatCount = 0) {
-        DispatchQueue.global().async {
-            guard let player = self.prepare(sound: sound, from: bundle) else { return }
+    ///     (the default) will play the sound only once.
+    ///   - playMode: /// Whether playback should restart from the beginning each time, or
+    ///     continue from the last playback point.
+    public init(sound: String, bundle: Bundle = .main, volume: Double = 1.0, repeatCount: SubsonicController.RepeatCount = 0, playMode: SubsonicController.PlayMode = .reset) {
+        audioPlayer = SubsonicController.shared.prepare(sound: sound, from: bundle)
 
-            player.numberOfLoops = repeatCount.value
-            player.volume = Float(volume)
-            player.delegate = self
-            player.play()
+        self.volume = volume
+        self.repeatCount = repeatCount
+        self.playMode = playMode
 
-            // We need to keep track of all sounds that are currently
-            // being managed by us, so we insert them into the
-            // `playingSounds` set on the main queue.
-            DispatchQueue.main.async {
-                self.playingSounds.insert(player)
-            }
-        }
+        super.init()
+
+        audioPlayer?.delegate = self
     }
 
-    /// Prepares a sound for playback, sending back the audio player for you to
-    /// use however you want.
-    /// - Parameters:
-    ///   - sound: The name of the sound file you want to load.
-    ///   - bundle: The bundle containing the sound file. Defaults to the main bundle.
-    /// - Returns: The prepared AVAudioPlayer instance, ready to play.
-    @discardableResult///
-    public func prepare(sound: String, from bundle: Bundle = .main) -> AVAudioPlayer? {
-        guard let url = bundle.url(forResource: sound, withExtension: nil) else {
-            print("Failed to find \(sound) in bundle.")
-            return nil
+    /// Plays the current sound. If `playMode` is set to `.reset` this will play from the beginning,
+    /// otherwise it will play from where the sound last left off.
+    public func play() {
+        isPlaying = true
+
+        if playMode == .reset {
+            audioPlayer?.currentTime = 0
         }
 
-        guard let player = try? AVAudioPlayer(contentsOf: url) else {
-            print("Failed to load \(sound) from bundle.")
-            return nil
-        }
-
-        player.prepareToPlay()
-        return player
+        audioPlayer?.play()
     }
 
-    /// Called when one of our sounds has finished, so we can remove it from the
-    /// set of active sounds and Swift can release the memory.
+    /// Stops the audio from playing.
+    public func stop() {
+        audioPlayer?.stop()
+    }
+
     public func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
-        playingSounds.remove(player)
-    }
-
-    /// Stops one specific sound file currently being played centrally by Subsonic.
-    public func stop(sound: String) {
-        for playingSound in playingSounds {
-            if playingSound.url?.lastPathComponent == sound {
-                playingSound.stop()
-            }
-        }
-    }
-
-    /// Stops all sounds currently being played centrally by Subsonic.
-    public func stopAllManagedSounds() {
-        for playingSound in playingSounds {
-            playingSound.stop()
-        }
+        isPlaying = false
     }
 }
 

@@ -44,11 +44,11 @@ public struct SubsonicPlayerModifier: ViewModifier {
 
     /// How many times to repeat this sound. Specifying 0 here (the default)
     /// will play the sound only once.
-    let repeatCount: SubsonicPlayer.RepeatCount
+    let repeatCount: SubsonicController.RepeatCount
 
     /// Whether playback should restart from the beginning each time, or
     /// continue from the last playback point.
-    var playMode: SubsonicPlayer.PlayMode = .reset
+    var playMode: SubsonicController.PlayMode = .reset
 
     /// Our internal audio player, marked @State to keep it alive when our
     /// modifier is recreated.
@@ -96,7 +96,7 @@ public struct SubsonicPlayerModifier: ViewModifier {
 
         // Load the audio player, but *do not* play – playback should
         // only happen when the isPlaying Boolean becomes true.
-        audioPlayer = SubsonicPlayer.shared.prepare(sound: sound, from: from)
+        audioPlayer = SubsonicController.shared.prepare(sound: sound, from: from)
         audioPlayerDelegate?.onFinish = audioFinished
         audioPlayer?.delegate = audioPlayerDelegate
 
