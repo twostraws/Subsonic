@@ -49,7 +49,7 @@ public class SubsonicPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
     ///     specified in the range 0 (no volume) to 1 (maximum volume).
     ///   - repeatCount: How many times to repeat this sound. Specifying 0 here
     ///     (the default) will play the sound only once.
-    ///   - playMode: /// Whether playback should restart from the beginning each time, or
+    ///   - playMode: Whether playback should restart from the beginning each time, or
     ///     continue from the last playback point.
     public init(sound: String, bundle: Bundle = .main, volume: Double = 1.0, repeatCount: SubsonicController.RepeatCount = 0, playMode: SubsonicController.PlayMode = .reset) {
         audioPlayer = SubsonicController.shared.prepare(sound: sound, from: bundle)
