@@ -83,11 +83,7 @@ struct ContentView: View {
         Button {
             isPlaying.toggle()
         } label: {
-            if isPlaying {
-                Image(systemName: "speaker.wave.3")
-            } else {
-                Image(systemName: "speaker")
-            }
+            Image(systemName: isPlaying ? "speaker.wave.3" : "speaker")
         }
         .sound("example.mp3", isPlaying: $isPlaying)
     }

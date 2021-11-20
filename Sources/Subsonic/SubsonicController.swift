@@ -82,12 +82,12 @@ public class SubsonicController: NSObject, AVAudioPlayerDelegate {
     @discardableResult///
     public func prepare(sound: String, from bundle: Bundle = .main) -> AVAudioPlayer? {
         guard let url = bundle.url(forResource: sound, withExtension: nil) else {
-            print("Failed to find \(sound) in bundle.")
+            print("Failed to find \(sound) in \(bundle.bundleURL.lastPathComponent).")
             return nil
         }
 
         guard let player = try? AVAudioPlayer(contentsOf: url) else {
-            print("Failed to load \(sound) from bundle.")
+            print("Failed to load \(sound) from \(bundle.bundleURL.lastPathComponent).")
             return nil
         }
 
