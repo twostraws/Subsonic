@@ -77,6 +77,7 @@ public class SubsonicPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
 
     /// Stops the audio from playing.
     public func stop() {
+        isPlaying = false
         audioPlayer?.stop()
     }
 
