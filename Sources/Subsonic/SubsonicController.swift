@@ -79,7 +79,7 @@ public class SubsonicController: NSObject, AVAudioPlayerDelegate {
     ///   - sound: The name of the sound file you want to load.
     ///   - bundle: The bundle containing the sound file. Defaults to the main bundle.
     /// - Returns: The prepared AVAudioPlayer instance, ready to play.
-    @discardableResult///
+    @discardableResult
     public func prepare(sound: String, from bundle: Bundle = .main) -> AVAudioPlayer? {
         guard let url = bundle.url(forResource: sound, withExtension: nil) else {
             print("Failed to find \(sound) in \(bundle.bundleURL.lastPathComponent).")
@@ -106,6 +106,19 @@ public class SubsonicController: NSObject, AVAudioPlayerDelegate {
         for playingSound in playingSounds {
             if playingSound.url?.lastPathComponent == sound {
                 playingSound.stop()
+            }
+        }
+    }
+    
+    /// Sets the volume for a specific sound, or all sounds, with an optional fade effect.
+    /// - Parameters:
+    ///   - sound: The name of the sound file whose volume you want to adjust. If nil, adjusts all sounds.
+    ///   - volume: The new volume level, specified in the range 0 (no volume) to 1 (maximum volume).
+    ///   - fadeDuration: The duration over which the volume change should occur, defaulting to 0 seconds for immediate change.
+    public func setVolume(sound: String? = nil, volume: Float, fadeDuration: TimeInterval = 0) {
+        playingSounds.forEach { playingSound in
+            if sound == nil || playingSound.url?.lastPathComponent == sound {
+                playingSound.setVolume(volume, fadeDuration: fadeDuration)
             }
         }
     }
