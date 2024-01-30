@@ -19,12 +19,12 @@ public class SubsonicController: NSObject, AVAudioPlayerDelegate {
     public enum PlayMode {
         /// Restarting a sound should start from the beginning each time.
         case reset
-        
+
         /// Restarting a sound should pick up where it left off, or start from the
         /// beginning if it ended previously.
         case `continue`
     }
-    
+
     /// With AVAudioPlayer, specifying -1 for `numberOfLoops` means the
     /// audio should loop forever. To avoid exposing that in this library, we wrap
     /// the repeat count inside this custom struct, allowing `.continuous` instead.
@@ -36,20 +36,20 @@ public class SubsonicController: NSObject, AVAudioPlayerDelegate {
             self.value = value
         }
     }
-    
+
     /// This class is *not* designed to be instantiated; please use the `shared` singleton.
     override private init() { }
-    
+
     /// The main access point to this class. It's a singleton because sounds must
     /// be loaded and stored in order to continue playing after calling play().
     public static let shared = SubsonicController()
-    
+
     /// The collection of AVAudioPlayer instances that are currently playing.
     private var playingSounds = Set<AVAudioPlayer>()
-    
+
     /// A dictionary to map AVAudioPlayers to their respective completion handlers.
     private var completionHandlers = [AVAudioPlayer: () -> Void]()
-    
+
     /// Loads, prepares, then plays a single sound from your bundle.
     /// Optionally, a completion handler can be provided that will be called when the sound finishes playing.
     /// - Parameters:
@@ -67,9 +67,7 @@ public class SubsonicController: NSObject, AVAudioPlayerDelegate {
             player.delegate = self
             
             if let completion = completion {
-                DispatchQueue.main.async {
-                    self.completionHandlers[player] = completion
-                }
+                self.completionHandlers[player] = completion
             }
             
             player.play()
@@ -79,7 +77,7 @@ public class SubsonicController: NSObject, AVAudioPlayerDelegate {
             }
         }
     }
-    
+
     /// Prepares a sound for playback, sending back the audio player for you to
     /// use however you want.
     /// - Parameters:
@@ -92,16 +90,16 @@ public class SubsonicController: NSObject, AVAudioPlayerDelegate {
             print("Failed to find \(sound) in \(bundle.bundleURL.lastPathComponent).")
             return nil
         }
-        
+
         guard let player = try? AVAudioPlayer(contentsOf: url) else {
             print("Failed to load \(sound) from \(bundle.bundleURL.lastPathComponent).")
             return nil
         }
-        
+
         player.prepareToPlay()
         return player
     }
-    
+
     /// Called when one of our sounds has finished playing.
     /// This method removes the sound from the set of active sounds and releases its resources.
     /// If a completion handler was associated with this sound, it is executed and then removed.
@@ -109,13 +107,11 @@ public class SubsonicController: NSObject, AVAudioPlayerDelegate {
     ///   - player: The AVAudioPlayer instance that finished playing.
     ///   - flag: A Boolean value indicating whether playback finished successfully.
     public func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
-        DispatchQueue.main.async {
-            self.completionHandlers[player]?()
-            self.completionHandlers.removeValue(forKey: player)
-            self.playingSounds.remove(player)
-        }
+        self.completionHandlers[player]?()
+        self.completionHandlers.removeValue(forKey: player)
+        self.playingSounds.remove(player)
     }
-    
+
     /// Stops one specific sound file currently being played centrally by Subsonic.
     /// If the sound has a completion handler associated with it, the handler will be removed.
     /// - Parameter sound: The name of the sound file you want to stop.
@@ -123,14 +119,12 @@ public class SubsonicController: NSObject, AVAudioPlayerDelegate {
         for playingSound in playingSounds {
             if playingSound.url?.lastPathComponent == sound {
                 playingSound.stop()
-                DispatchQueue.main.async {
-                    self.completionHandlers.removeValue(forKey: playingSound)
-                    self.playingSounds.remove(playingSound)
-                }
+                self.completionHandlers.removeValue(forKey: playingSound)
+                self.playingSounds.remove(playingSound)
             }
         }
     }
-    
+
     /// Sets the volume for a specific sound, or all sounds, with an optional fade effect.
     /// - Parameters:
     ///   - sound: The name of the sound file whose volume you want to adjust. If nil, adjusts all sounds.
@@ -143,7 +137,7 @@ public class SubsonicController: NSObject, AVAudioPlayerDelegate {
             }
         }
     }
-    
+
     /// Stops all sounds currently being played centrally by Subsonic.
     public func stopAllManagedSounds() {
         for playingSound in playingSounds {

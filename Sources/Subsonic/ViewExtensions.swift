@@ -12,16 +12,17 @@
 import SwiftUI
 
 extension View {
-    /// Plays a single sound immediately.
+    /// Plays a single sound immediately with an optional completion handler.
     /// - Parameters:
     ///   - sound: The name of the sound file you want to load.
     ///   - bundle: The bundle containing the sound file. Defaults to the main bundle.
     ///   - volume: How loud to play this sound relative to other sounds in your app,
-    ///   specified in the range 0 (no volume) to 1 (maximum volume).
+    ///     specified in the range 0 (no volume) to 1 (maximum volume).
     ///   - repeatCount: How many times to repeat this sound. Specifying 0 here
-    ///   (the default) will play the sound only once.
-    public func play(sound: String, from bundle: Bundle = .main, volume: Double = 1, repeatCount: SubsonicController.RepeatCount = 0) {
-        SubsonicController.shared.play(sound: sound, from: bundle, volume: volume, repeatCount: repeatCount)
+    ///     (the default) will play the sound only once.
+    ///   - completion: An optional closure that gets called when the sound finishes playing.
+    public func play(sound: String, from bundle: Bundle = .main, volume: Double = 1, repeatCount: SubsonicController.RepeatCount = 0, completion: (() -> Void)? = nil) {
+        SubsonicController.shared.play(sound: sound, from: bundle, volume: volume, repeatCount: repeatCount, completion: completion)
     }
 
     /// Plays or stops a single sound based on the isPlaying Boolean
