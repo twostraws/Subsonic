@@ -31,7 +31,7 @@ public class SubsonicController: NSObject, AVAudioPlayerDelegate {
     public struct RepeatCount: ExpressibleByIntegerLiteral, Equatable {
         public static let continuous: RepeatCount = -1
         public let value: Int
-        
+
         public init(integerLiteral value: Int) {
             self.value = value
         }
@@ -61,17 +61,17 @@ public class SubsonicController: NSObject, AVAudioPlayerDelegate {
     public func play(sound: String, from bundle: Bundle = .main, volume: Double = 1, repeatCount: RepeatCount = 0, completion: (() -> Void)? = nil) {
         DispatchQueue.global().async {
             guard let player = self.prepare(sound: sound, from: bundle) else { return }
-            
+
             player.numberOfLoops = repeatCount.value
             player.volume = Float(volume)
             player.delegate = self
-            
+
             if let completion = completion {
                 self.completionHandlers[player] = completion
             }
-            
+
             player.play()
-            
+
             DispatchQueue.main.async {
                 self.playingSounds.insert(player)
             }
