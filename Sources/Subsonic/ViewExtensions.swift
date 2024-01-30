@@ -24,6 +24,15 @@ extension View {
     public func play(sound: String, from bundle: Bundle = .main, volume: Double = 1, repeatCount: SubsonicController.RepeatCount = 0, completion: (() -> Void)? = nil) {
         SubsonicController.shared.play(sound: sound, from: bundle, volume: volume, repeatCount: repeatCount, completion: completion)
     }
+    
+    /// Sets the volume for a specific sound, or all sounds, with an optional fade effect.
+    /// - Parameters:
+    ///   - sound: The name of the sound file whose volume you want to adjust. If nil, adjusts all sounds.
+    ///   - volume: The new volume level, specified in the range 0 (no volume) to 1 (maximum volume).
+    ///   - fadeDuration: The duration over which the volume change should occur, defaulting to 0 seconds for immediate change.
+    public func setVolume(sound: String? = nil, volume: Float, fadeDuration: TimeInterval = 0) {
+        SubsonicController.shared.setVolume(sound: sound, volume: volume, fadeDuration: fadeDuration)
+    }
 
     /// Plays or stops a single sound based on the isPlaying Boolean
     /// - Parameters:
