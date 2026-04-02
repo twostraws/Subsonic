@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="https://www.hackingwithswift.com/files/subsonic/logo.png" alt="Sitrep logo" width="485" maxHeight="83" />
+    <img src="https://www.hackingwithswift.com/files/subsonic/logo.png" alt="Subsonic logo" width="485" maxHeight="83" />
 </p>
 
 <p align="center">
